@@ -1,5 +1,7 @@
 package com.exchange.pip.core.orderbook;
 
+import com.exchange.pip.core.api.model.ClientOrder;
+
 import java.util.Objects;
 
 /**
@@ -42,6 +44,19 @@ public final class Order {
         this.price = price;
         this.originalQty = originalQty;
         this.remainingQty = originalQty;
+    }
+
+    public Order(ClientOrder clientOrder, long sequence) {
+        this(
+                clientOrder.orderId(),
+                sequence,
+                clientOrder.symbol(),
+                clientOrder.userId(),
+                clientOrder.side(),
+                clientOrder.orderType(),
+                clientOrder.price(),
+                clientOrder.quantity()
+        );
     }
 
     public long getOrderId() { return orderId; }

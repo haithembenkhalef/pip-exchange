@@ -1,10 +1,17 @@
 package com.exchange.pip.core.orderbook;
 
+import com.exchange.pip.core.api.model.ClientOrder;
+import com.exchange.pip.core.events.OrderEvent;
 import com.exchange.pip.core.shared.IdGenerator;
 import com.exchange.pip.core.trade.Trade;
+import com.lmax.disruptor.EventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * The naive price-time priority match loop (GTC orders only — for now).
@@ -31,19 +38,44 @@ import java.util.List;
  * caller at a time (the single-threaded command pipeline). It keeps no
  * state of its own besides the ID generator.
  */
-final class MatchingEngine {
+public final class MatchingEngine implements Runnable {
+
+    Logger logger = LoggerFactory.getLogger(MatchingEngine.class);
 
     private final OrderBook book;
+    private final IdGenerator orderSequenceGenerator;
     private final IdGenerator tradeIdGenerator;
+    private final BlockingQueue<ClientOrder> orders = new ArrayBlockingQueue<>(100_000);
+    private final EventHandler<OrderEvent> eventHandler;
 
-    MatchingEngine(OrderBook book, IdGenerator tradeIdGenerator) {
+    MatchingEngine(OrderBook book, IdGenerator orderSequenceGenerator, IdGenerator tradeIdGenerator) {
         this.book = book;
+        this.orderSequenceGenerator = orderSequenceGenerator;
         this.tradeIdGenerator = tradeIdGenerator;
+        this.eventHandler
+                = (event, sequence, endOfBatch)
+                -> {
+            logger.info("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
+            this.handleOrderEvent(event.getOrder());
+        };
     }
 
     /** Convenience constructor: engine with its own fresh trade-id sequence. */
     MatchingEngine(OrderBook book) {
-        this(book, new IdGenerator());
+        this(book, new IdGenerator(), new IdGenerator());
+    }
+
+    public EventHandler<OrderEvent> getEventHandler() {
+        return eventHandler;
+    }
+
+    public void submit(ClientOrder order) throws InterruptedException {
+        orders.put(order);
+    }
+
+    public void handleOrderEvent(ClientOrder take) {
+        Order order = new Order(take, orderSequenceGenerator.next());
+        processOrder(order);
     }
 
     /**
@@ -101,7 +133,10 @@ final class MatchingEngine {
         if (resting) {
             book.restOrder(taker); // GTC: remainder rests at its limit price
         }
-        return new MatchResult(taker, List.copyOf(trades), resting);
+
+        MatchResult matchResult = new MatchResult(taker, List.copyOf(trades), resting);
+        logger.info("Match result is {}", matchResult);
+        return matchResult;
     }
 
     /** Best reachable opposite-side level, or null if that side is empty. */
@@ -119,5 +154,21 @@ final class MatchingEngine {
             case BID -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() >= restingPrice;
             case ASK -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() <= restingPrice;
         };
+    }
+
+
+
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                ClientOrder take = orders.take();
+                Order order = new Order(take, orderSequenceGenerator.next());
+                processOrder(order);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
     }
 }
