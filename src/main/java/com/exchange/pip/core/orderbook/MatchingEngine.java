@@ -55,7 +55,10 @@ public final class MatchingEngine implements Runnable {
         this.eventHandler
                 = (event, sequence, endOfBatch)
                 -> {
-            logger.info("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
+            if(!event.getOrder().symbol().equals(book.getSymbol())) {
+                return;
+            }
+            logger.debug("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
             this.handleOrderEvent(event.getOrder());
         };
     }
@@ -135,7 +138,7 @@ public final class MatchingEngine implements Runnable {
         }
 
         MatchResult matchResult = new MatchResult(taker, List.copyOf(trades), resting);
-        logger.info("Match result is {}", matchResult);
+        logger.debug("Match result is {}", matchResult);
         return matchResult;
     }
 
