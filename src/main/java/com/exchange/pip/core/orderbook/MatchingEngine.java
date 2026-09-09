@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * The naive price-time priority match loop (GTC orders only — for now).
@@ -38,14 +36,13 @@ import java.util.concurrent.BlockingQueue;
  * caller at a time (the single-threaded command pipeline). It keeps no
  * state of its own besides the ID generator.
  */
-public final class MatchingEngine implements Runnable {
+public final class MatchingEngine {
 
     Logger logger = LoggerFactory.getLogger(MatchingEngine.class);
 
     private final OrderBook book;
     private final IdGenerator orderSequenceGenerator;
     private final IdGenerator tradeIdGenerator;
-    private final BlockingQueue<ClientOrder> orders = new ArrayBlockingQueue<>(100_000);
     private final EventHandler<OrderEvent> eventHandler;
 
     MatchingEngine(OrderBook book, IdGenerator orderSequenceGenerator, IdGenerator tradeIdGenerator) {
@@ -70,10 +67,6 @@ public final class MatchingEngine implements Runnable {
 
     public EventHandler<OrderEvent> getEventHandler() {
         return eventHandler;
-    }
-
-    public void submit(ClientOrder order) throws InterruptedException {
-        orders.put(order);
     }
 
     public void handleOrderEvent(ClientOrder take) {
@@ -157,21 +150,5 @@ public final class MatchingEngine implements Runnable {
             case BID -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() >= restingPrice;
             case ASK -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() <= restingPrice;
         };
-    }
-
-
-
-    @Override
-    public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                ClientOrder take = orders.take();
-                Order order = new Order(take, orderSequenceGenerator.next());
-                processOrder(order);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
     }
 }
