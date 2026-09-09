@@ -1,7 +1,6 @@
 package com.exchange.pip.core.events;
 
 import com.exchange.pip.core.api.model.ClientOrder;
-import com.exchange.pip.core.orderbook.EngineRegistry;
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.WaitStrategy;
@@ -13,15 +12,17 @@ import java.util.concurrent.ThreadFactory;
 @Singleton
 public class EventDisruptor {
 
+    private static final int RING_SIZE = 1 << 16;
+
     private final ThreadFactory threadFactory = DaemonThreadFactory.INSTANCE;
     private final WaitStrategy waitStrategy = new BusySpinWaitStrategy();
-    private final com.lmax.disruptor.dsl.Disruptor<OrderEvent> disruptor = new com.lmax.disruptor.dsl.Disruptor<OrderEvent>(OrderEvent.EVENT_FACTORY, 16, threadFactory, ProducerType.SINGLE, waitStrategy);
+    private final com.lmax.disruptor.dsl.Disruptor<OrderEvent> disruptor = new com.lmax.disruptor.dsl.Disruptor<OrderEvent>(OrderEvent.EVENT_FACTORY, RING_SIZE, threadFactory, ProducerType.MULTI, waitStrategy);
     private final RingBuffer<OrderEvent> ringBuffer;
-    private final EngineRegistry engineRegistry;
+    private final MainEngineRouter router;
 
-    public EventDisruptor(EngineRegistry engineRegistry) {
-        this.engineRegistry = engineRegistry;
-        disruptor.handleEventsWith(engineRegistry.getEventHandlers());
+    public EventDisruptor(MainEngineRouter router) {
+        this.router = router;
+        disruptor.handleEventsWith(router);
         ringBuffer = disruptor.start();
     }
 

@@ -2,6 +2,7 @@ package com.exchange.pip.core.orderbook;
 
 import com.exchange.pip.core.trade.Trade;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ import java.util.List;
  *                     false if fully filled. (Meaningless for IOC/FOK once they exist — those
  *                     never rest; FOK additionally guarantees fully-filled-or-nothing.)
  */
-record MatchResult(Order order, List<Trade> trades, boolean restingOnBook) {
+record MatchResult(Order order, List<Trade> trades, boolean restingOnBook, long latency) {
 
     boolean isFullyFilled() {
         return order.isFullyFilled();

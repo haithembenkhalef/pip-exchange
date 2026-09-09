@@ -55,8 +55,9 @@ public final class MatchingEngine {
             if(!event.getOrder().symbol().equals(book.getSymbol())) {
                 return;
             }
-            logger.debug("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
+            //logger.debug("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
             this.handleOrderEvent(event.getOrder());
+
         };
     }
 
@@ -69,9 +70,10 @@ public final class MatchingEngine {
         return eventHandler;
     }
 
-    public void handleOrderEvent(ClientOrder take) {
+    public MatchResult handleOrderEvent(ClientOrder take) {
         Order order = new Order(take, orderSequenceGenerator.next());
-        processOrder(order);
+        MatchResult result = processOrder(order);
+        return result;
     }
 
     /**
@@ -80,6 +82,8 @@ public final class MatchingEngine {
      * instance for a second call; construct a fresh one per command.
      */
     MatchResult processOrder(Order taker) {
+
+        long startTime = System.nanoTime();
         if (taker.getOrderType() != OrderType.GTC) {
             // Naive phase: GTC only. IOC/FOK/MARKET branch off the same
             // loop later — fail loudly rather than silently resting an
@@ -129,9 +133,10 @@ public final class MatchingEngine {
         if (resting) {
             book.restOrder(taker); // GTC: remainder rests at its limit price
         }
+        long endTime = System.nanoTime();
+        MatchResult matchResult = new MatchResult(taker, trades, resting, endTime - startTime);
+        //logger.debug("Match result is {}", matchResult);
 
-        MatchResult matchResult = new MatchResult(taker, List.copyOf(trades), resting);
-        logger.debug("Match result is {}", matchResult);
         return matchResult;
     }
 
@@ -150,5 +155,9 @@ public final class MatchingEngine {
             case BID -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() >= restingPrice;
             case ASK -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() <= restingPrice;
         };
+    }
+
+    public void clearBook() {
+        book.cleanUp();
     }
 }

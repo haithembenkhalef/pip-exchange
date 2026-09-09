@@ -142,4 +142,10 @@ final class OrderBook {
             map.remove(price);
         }
     }
+
+    void cleanUp() {
+        bids.clear();
+        asks.clear();
+        ordersById.clear();
+    }
 }
