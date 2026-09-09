@@ -18,7 +18,7 @@ import java.util.List;
  *                     false if fully filled. (Meaningless for IOC/FOK once they exist — those
  *                     never rest; FOK additionally guarantees fully-filled-or-nothing.)
  */
-record MatchResult(Order order, List<Trade> trades, boolean restingOnBook, long latency) {
+public record MatchResult(Order order, List<Trade> trades, boolean restingOnBook, long latency) {
 
     boolean isFullyFilled() {
         return order.isFullyFilled();

@@ -1,12 +1,17 @@
-package com.exchange.pip.core.events;
+package com.exchange.pip.core.orderbook.events;
 
 import com.exchange.pip.core.api.model.ClientOrder;
 import com.exchange.pip.core.orderbook.EngineRegistry;
+import com.exchange.pip.core.orderbook.MatchResult;
 import com.exchange.pip.core.orderbook.MatchingEngine;
 import com.lmax.disruptor.EventHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @ApplicationScoped
 public final class MainEngineRouter implements EventHandler<OrderEvent> {
@@ -14,6 +19,7 @@ public final class MainEngineRouter implements EventHandler<OrderEvent> {
     private static final Logger logger = LoggerFactory.getLogger(MainEngineRouter.class);
 
     private final EngineRegistry engineRegistry;
+    private final List<MatchResult> results = new ArrayList<>();
 
     public MainEngineRouter(EngineRegistry engineRegistry) {
         this.engineRegistry = engineRegistry;
@@ -26,6 +32,15 @@ public final class MainEngineRouter implements EventHandler<OrderEvent> {
         if (order == null)
             return;
         MatchingEngine matchingEngine = engineRegistry.get(order.symbol());
-        matchingEngine.handleOrderEvent(order);
+        MatchResult matchResult = matchingEngine.handleOrderEvent(order);
+        results.add(matchResult);
+    }
+
+    public List<MatchResult> getResults() {
+        return Collections.unmodifiableList(results);
+    }
+
+    public void clear() {
+        results.clear();
     }
 }

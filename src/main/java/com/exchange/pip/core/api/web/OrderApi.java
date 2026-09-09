@@ -1,7 +1,7 @@
 package com.exchange.pip.core.api.web;
 
 import com.exchange.pip.core.api.model.ClientOrder;
-import com.exchange.pip.core.events.EventDisruptor;
+import com.exchange.pip.core.orderbook.events.EventDisruptor;
 import com.exchange.pip.core.shared.OrderIdGenerator;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;

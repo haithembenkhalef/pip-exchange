@@ -1,7 +1,7 @@
 package com.exchange.pip.core.orderbook;
 
 import com.exchange.pip.core.api.model.ClientOrder;
-import com.exchange.pip.core.events.OrderEvent;
+import com.exchange.pip.core.orderbook.events.OrderEvent;
 import com.exchange.pip.core.shared.IdGenerator;
 import com.exchange.pip.core.trade.Trade;
 import com.lmax.disruptor.EventHandler;
