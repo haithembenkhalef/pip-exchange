@@ -1,8 +1,5 @@
 package com.exchange.pip.core.orderbook;
 
-import com.exchange.pip.core.shared.IdGenerator;
-import com.lmax.disruptor.EventHandler;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
@@ -47,10 +44,6 @@ public final class EngineRegistry {
             throw new UnknownSymbolException(symbol);
         }
         return engine;
-    }
-
-    public EventHandler[] getEventHandlers() {
-        return enginesBySymbol.values().stream().map(MatchingEngine::getEventHandler).toArray(EventHandler[]::new);
     }
 
     public boolean supports(String symbol) {

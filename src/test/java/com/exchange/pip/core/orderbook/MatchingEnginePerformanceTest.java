@@ -13,7 +13,7 @@ import java.util.List;
 @QuarkusTest
 class MatchingEnginePerformanceTest {
 
-    private static final int ORDER_COUNT = 1000_000;
+    private static final int ORDER_COUNT = 1_000_000;
 
     @Inject
     EngineRegistry engineRegistry;

@@ -32,7 +32,7 @@ public final class MainEngineRouter implements EventHandler<OrderEvent> {
         if (order == null)
             return;
         MatchingEngine matchingEngine = engineRegistry.get(order.symbol());
-        MatchResult matchResult = matchingEngine.handleOrderEvent(order);
+        MatchResult matchResult = matchingEngine.handleOrderEvent(event);
         results.add(matchResult);
     }
 

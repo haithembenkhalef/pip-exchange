@@ -5,14 +5,13 @@ import com.lmax.disruptor.EventFactory;
 
 public final class OrderEvent {
     private ClientOrder order;
-    public final static EventFactory EVENT_FACTORY
-      = OrderEvent::new;
+    public final static EventFactory EVENT_FACTORY = OrderEvent::new;
 
-    public ClientOrder getOrder() {
-        return order;
-    }
+    private long sequence = -1; // unset until the sequencer handler stamps it
 
-    public void setOrder(ClientOrder order) {
-        this.order = order;
-    }
+    public ClientOrder getOrder() { return order; }
+    public void setOrder(ClientOrder order) { this.order = order; }
+
+    public long getSequence() { return sequence; }
+    public void setSequence(long sequence) { this.sequence = sequence; }
 }

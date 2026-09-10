@@ -19,10 +19,16 @@ public class EventDisruptor {
     private final com.lmax.disruptor.dsl.Disruptor<OrderEvent> disruptor = new com.lmax.disruptor.dsl.Disruptor<OrderEvent>(OrderEvent.EVENT_FACTORY, RING_SIZE, threadFactory, ProducerType.MULTI, waitStrategy);
     private final RingBuffer<OrderEvent> ringBuffer;
     private final MainEngineRouter router;
+    private final OrderJournaler orderJournaler;
+    private final OrderSequencer sequencer;
 
-    public EventDisruptor(MainEngineRouter router) {
+
+    public EventDisruptor(MainEngineRouter router, OrderJournaler orderJournaler, OrderSequencer sequencer) {
         this.router = router;
-        disruptor.handleEventsWith(router);
+        this.orderJournaler = orderJournaler;
+        this.sequencer = sequencer;
+        disruptor.handleEventsWith(sequencer)
+                .then(orderJournaler, router);
         ringBuffer = disruptor.start();
     }
 

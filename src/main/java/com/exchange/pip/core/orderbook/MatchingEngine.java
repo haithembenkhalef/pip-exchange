@@ -41,38 +41,22 @@ public final class MatchingEngine {
     Logger logger = LoggerFactory.getLogger(MatchingEngine.class);
 
     private final OrderBook book;
-    private final IdGenerator orderSequenceGenerator;
     private final IdGenerator tradeIdGenerator;
-    private final EventHandler<OrderEvent> eventHandler;
 
-    MatchingEngine(OrderBook book, IdGenerator orderSequenceGenerator, IdGenerator tradeIdGenerator) {
+    MatchingEngine(OrderBook book, IdGenerator tradeIdGenerator) {
         this.book = book;
-        this.orderSequenceGenerator = orderSequenceGenerator;
         this.tradeIdGenerator = tradeIdGenerator;
-        this.eventHandler
-                = (event, sequence, endOfBatch)
-                -> {
-            if(!event.getOrder().symbol().equals(book.getSymbol())) {
-                return;
-            }
-            //logger.debug("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
-            this.handleOrderEvent(event.getOrder());
-
-        };
     }
 
     /** Convenience constructor: engine with its own fresh trade-id sequence. */
     MatchingEngine(OrderBook book) {
-        this(book, new IdGenerator(), new IdGenerator());
+        this(book, new IdGenerator());
     }
 
-    public EventHandler<OrderEvent> getEventHandler() {
-        return eventHandler;
-    }
-
-    public MatchResult handleOrderEvent(ClientOrder take) {
-        Order order = new Order(take, orderSequenceGenerator.next());
-        MatchResult result = processOrder(order);
+    public MatchResult handleOrderEvent(OrderEvent event) {
+        ClientOrder order = event.getOrder();
+        Order take = new Order(order, event.getSequence());
+        MatchResult result = processOrder(take);
         return result;
     }
 

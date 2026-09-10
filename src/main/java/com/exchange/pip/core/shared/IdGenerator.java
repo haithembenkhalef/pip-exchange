@@ -13,9 +13,28 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class IdGenerator {
 
-    private final AtomicLong counter = new AtomicLong(0);
+    private final AtomicLong counter;
+
+    /** Starts fresh at 0 (first call to next() returns 1). */
+    public IdGenerator() {
+        this(0L);
+    }
+
+    /**
+     * Starts from a known point — e.g. seeded with a previously-recovered
+     * sequence so numbering resumes without gaps or collisions after a
+     * restart. First call to next() returns startingValue + 1.
+     */
+    public IdGenerator(long startingValue) {
+        this.counter = new AtomicLong(startingValue);
+    }
 
     public long next() {
         return counter.incrementAndGet();
+    }
+
+    /** Current high-water mark without consuming a new value. */
+    public long current() {
+        return counter.get();
     }
 }
