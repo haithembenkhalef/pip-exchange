@@ -1,14 +1,13 @@
-package com.exchange.pip.core.orderbook.events;
+package com.exchange.pip.core.orderbook;
 
 import com.exchange.pip.core.api.model.ClientOrder;
-import com.exchange.pip.core.orderbook.EngineRegistry;
-import com.exchange.pip.core.orderbook.MatchResult;
-import com.exchange.pip.core.orderbook.MatchingEngine;
+import com.exchange.pip.core.orderbook.events.OrderEvent;
 import com.lmax.disruptor.EventHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,7 @@ public final class MainEngineRouter implements EventHandler<OrderEvent> {
     }
 
     @Override
-    public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
+    public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) throws IOException {
         //logger.debug("Id is {} sequence id that was used is {}", event.getOrder().orderId(), sequence);
         ClientOrder order = event.getOrder();
         if (order == null)
@@ -34,6 +33,8 @@ public final class MainEngineRouter implements EventHandler<OrderEvent> {
         MatchingEngine matchingEngine = engineRegistry.get(order.symbol());
         MatchResult matchResult = matchingEngine.handleOrderEvent(event);
         results.add(matchResult);
+        //TODO: Make the snapshot every x time/order
+        matchingEngine.snapshotBook(event.getSequence());
     }
 
     public List<MatchResult> getResults() {

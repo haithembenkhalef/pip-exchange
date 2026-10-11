@@ -4,10 +4,10 @@ import com.exchange.pip.core.api.model.ClientOrder;
 import com.exchange.pip.core.orderbook.events.OrderEvent;
 import com.exchange.pip.core.shared.IdGenerator;
 import com.exchange.pip.core.trade.Trade;
-import com.lmax.disruptor.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +42,8 @@ public final class MatchingEngine {
 
     private final OrderBook book;
     private final IdGenerator tradeIdGenerator;
+
+    private final OrderBookSnapshot snapshot = new OrderBookSnapshot();
 
     MatchingEngine(OrderBook book, IdGenerator tradeIdGenerator) {
         this.book = book;
@@ -139,6 +141,16 @@ public final class MatchingEngine {
             case BID -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() >= restingPrice;
             case ASK -> taker.getOrderType() == OrderType.MARKET || taker.getPrice() <= restingPrice;
         };
+    }
+
+    public void snapshotBook(long lastAppliedSequence) throws IOException {
+        if(shouldSnapShot()) {
+            snapshot.snapshotBook(book, lastAppliedSequence);
+        }
+    }
+
+    private boolean shouldSnapShot() {
+        return false;
     }
 
     public void clearBook() {

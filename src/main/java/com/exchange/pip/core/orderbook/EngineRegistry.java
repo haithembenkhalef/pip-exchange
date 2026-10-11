@@ -2,6 +2,9 @@ package com.exchange.pip.core.orderbook;
 
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,16 +24,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public final class EngineRegistry {
 
-    private final Map<String, MatchingEngine> enginesBySymbol;
+    private final Map<String, MatchingEngine> enginesBySymbol = new ConcurrentHashMap();
+
+    private static final List<String> SYMBOLS = List.of("AAPL");
 
     public EngineRegistry() {
-        enginesBySymbol = new ConcurrentHashMap<>(
-                Map.of("AAPL", new MatchingEngine(new OrderBook("AAPL")))
-        );
-    }
-
-    public EngineRegistry(Map<String, MatchingEngine> enginesBySymbol) {
-        this.enginesBySymbol = Map.copyOf(enginesBySymbol);
+        OrderBookSnapshot orderBookSnapshot = new OrderBookSnapshot();
+        for (String symbol : SYMBOLS) {
+            OrderBook loaded;
+            try {
+                loaded = orderBookSnapshot.restoreBookFromSnapshot(symbol);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            OrderBook book = loaded != null ? loaded : new OrderBook(symbol);
+            enginesBySymbol.put(symbol, new MatchingEngine(book));
+        }
     }
 
     /**
@@ -48,6 +57,10 @@ public final class EngineRegistry {
 
     public boolean supports(String symbol) {
         return enginesBySymbol.containsKey(symbol);
+    }
+
+    public List<String> listSupportedSymbols() {
+        return new ArrayList<>(enginesBySymbol.keySet());
     }
 
     public static final class UnknownSymbolException extends RuntimeException {

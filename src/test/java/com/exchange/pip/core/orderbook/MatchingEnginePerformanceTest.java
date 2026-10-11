@@ -2,7 +2,6 @@ package com.exchange.pip.core.orderbook;
 
 import com.exchange.pip.core.api.model.ClientOrder;
 import com.exchange.pip.core.orderbook.events.EventDisruptor;
-import com.exchange.pip.core.orderbook.events.MainEngineRouter;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;

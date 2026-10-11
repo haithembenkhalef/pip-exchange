@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 public final class OrderCommandCodec {
 
-    public static final int RECORD_SIZE = 48; // Fixed binary stride length
+    public static final int RECORD_SIZE = 50; // Fixed binary stride length
 
     private OrderCommandCodec() {
     }
@@ -25,7 +25,6 @@ public final class OrderCommandCodec {
         buf.putLong(symbolId);
         buf.put(encodeSide(order.side()));
         buf.put(encodeType(order.orderType()));
-        buf.putInt(0); // 4-byte padding for 64-bit memory alignment
     }
 
     /**

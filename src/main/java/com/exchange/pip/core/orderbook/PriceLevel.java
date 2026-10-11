@@ -96,4 +96,9 @@ final class PriceLevel {
     void onPartialFill(long filledQty) {
         totalQuantity -= filledQty;
     }
+
+    /** Iterate orders in strict FIFO (matching) order — head to tail. */
+    java.util.Iterator<Order> fifoIterator() {
+        return orders.iterator(); // ArrayDeque iterates head -> tail
+    }
 }
